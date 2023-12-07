@@ -1,7 +1,3 @@
-fn main() {
-    println!("{}", run(vec![], false));
-}
-
 fn extract_value(s: &str, allow_words: bool) -> u32 {
     if allow_words {
         let mut lo_idx = s.len();
@@ -43,38 +39,9 @@ fn extract_value(s: &str, allow_words: bool) -> u32 {
     }
 }
 
-fn run(lines: Vec<&str>, allow_words: bool) -> u32 {
+pub fn run(lines: Vec<&str>, allow_words: bool) -> u32 {
     lines
         .into_iter()
         .map(|s| extract_value(s, allow_words))
         .sum()
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn part_1_small() {
-        let input = include_str!("in1a.txt");
-        assert_eq!(run(input.lines().collect(), false), 142);
-    }
-
-    #[test]
-    fn part_1_big() {
-        let input = include_str!("in2.txt");
-        assert_eq!(run(input.lines().collect(), false), 55386);
-    }
-
-    #[test]
-    fn part_2_small() {
-        let input = include_str!("in1b.txt");
-        assert_eq!(run(input.lines().collect(), true), 281);
-    }
-
-    #[test]
-    fn part_2_big() {
-        let input = include_str!("in2.txt");
-        assert_eq!(run(input.lines().collect(), true), 54824);
-    }
 }
