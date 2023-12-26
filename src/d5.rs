@@ -295,11 +295,11 @@ mod tests {
         );
         assert_eq!(
             m.apply_ranges([Range::new(5, 4)].as_ref()),
-            vec![Range::new(15, 3), Range::new(8, 1)]
+            vec![Range::new(8, 1), Range::new(15, 3)]
         );
         assert_eq!(
             m.apply_ranges([Range::new(4, 4)].as_ref()),
-            vec![Range::new(15, 3), Range::new(4, 1)]
+            vec![Range::new(4, 1), Range::new(15, 3)]
         );
     }
 
