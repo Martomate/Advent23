@@ -7,3 +7,4 @@ edition = "2021"
 
 [dependencies]
 gcd = "2.3.0"
+queues = "1.1.0"
