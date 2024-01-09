@@ -4,7 +4,7 @@ use itertools::{repeat_n, Itertools};
 
 struct Matcher {
     pattern: Vec<char>,
-    cache: HashMap<(usize, Vec<char>, usize), u64>,
+    cache: HashMap<(usize, u32, usize), u64>,
 }
 
 impl Matcher {
@@ -21,7 +21,7 @@ impl Matcher {
             let here = self.pattern[i];
             match here {
                 '?' => {
-                    let cache_key = (p_idx, self.pattern[p_idx..=i].to_vec(), c.len());
+                    let cache_key = (i, count, c.len());
 
                     if let Some(value) = self.cache.get(&cache_key) {
                         return *value;
