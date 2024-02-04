@@ -11,12 +11,12 @@ enum Dir {
 }
 
 impl Dir {
-    fn forward(self, (x, y): (i32, i32)) -> (i32, i32) {
+    fn forward(self, (x, y): (isize, isize), steps: isize) -> (isize, isize) {
         match self {
-            Dir::Up => (x, y - 1),
-            Dir::Left => (x - 1, y),
-            Dir::Down => (x, y + 1),
-            Dir::Right => (x + 1, y),
+            Dir::Up => (x, y - steps),
+            Dir::Left => (x - steps, y),
+            Dir::Down => (x, y + steps),
+            Dir::Right => (x + steps, y),
         }
     }
 
@@ -102,38 +102,92 @@ enum Coloring {
     Mid,
 }
 
-fn execute_plan(plan: Vec<PlanStep>) -> u64 {
-    let mut coloring: HashMap<(i32, i32), Coloring> = HashMap::new();
+fn gridify(xs: Vec<i32>) -> (Vec<i32>, Vec<u32>) {
+    let xs = xs.iter().cloned().unique().sorted().collect::<Vec<i32>>();
+    
+    let mut grid = Vec::new();
+    let mut mult = Vec::new();
 
+    grid.push(xs[0]);
+    mult.push(1);
+
+    let mut prev_x = xs[0];
+    for &x in xs[1..].iter() {
+        if x > prev_x + 1 {
+            grid.push(prev_x+1);
+            mult.push((x - prev_x - 1) as u32);
+        }
+        grid.push(x);
+        mult.push(1);
+        
+        prev_x = x;
+    }
+
+    (grid, mult)
+}
+
+fn execute_plan(plan: Vec<PlanStep>) -> u64 {
+    let mut xs = Vec::new();
+    let mut ys= Vec::new();
     let mut here = (0, 0);
+    for s in plan.iter() {
+        let there = s.dir.forward(here, s.steps as isize);
+        xs.push(there.0 as i32);
+        ys.push(there.1 as i32);
+        here = there;
+    }
+
+    let (x_grid, x_mult) = gridify(xs);
+    let (y_grid, y_mult) = gridify(ys);
+
+    let mut coords: HashMap<(i32, i32), (isize, isize)> = HashMap::new();
+    let mut mult: HashMap<(isize, isize), u64> = HashMap::new();
+    for i in 0..x_grid.len() {
+        for j in 0..y_grid.len() {
+            coords.insert((x_grid[i], y_grid[j]), (i as isize, j as isize));
+            mult.insert((i as isize, j as isize), x_mult[i] as u64 * y_mult[j] as u64);
+        }
+    }
+
+    let mut coloring: HashMap<(isize, isize), Coloring> = HashMap::new();
+
+    let mut here = *coords.get(&(0, 0)).unwrap();
 
     for s in plan {
         coloring.insert(here, Coloring::Mid);
         coloring
-            .entry(s.dir.left().forward(here))
+            .entry(s.dir.left().forward(here, 1))
             .or_insert(Coloring::Left);
         coloring
-            .entry(s.dir.right().forward(here))
+            .entry(s.dir.right().forward(here, 1))
             .or_insert(Coloring::Right);
+        
+        let here_real = (x_grid[here.0 as usize], y_grid[here.1 as usize]);
+        let (dx, dy) = s.dir.forward((0, 0), 1);
+        let dest_real = (here_real.0 + dx as i32 * s.steps as i32, here_real.1 + dy as i32 * s.steps as i32);
+        let dest = *coords.get(&dest_real).unwrap();
+        let steps = dest.0.abs_diff(here.0) + dest.1.abs_diff(here.1);
+
         if s.dir == Dir::Left || s.dir == Dir::Right {
-            for _ in 0..s.steps {
-                here = s.dir.forward(here);
+            for _ in 0..steps {
+                here = s.dir.forward(here, 1);
                 coloring.insert(here, Coloring::Mid);
             }
         } else {
-        for _ in 0..s.steps {
-            here = s.dir.forward(here);
-            coloring.insert(here, Coloring::Mid);
-            coloring
-                .entry(s.dir.left().forward(here))
-                .or_insert(Coloring::Left);
-            coloring
-                .entry(s.dir.right().forward(here))
-                .or_insert(Coloring::Right);
-        }}
+            for _ in 0..steps {
+                here = s.dir.forward(here, 1);
+                coloring.insert(here, Coloring::Mid);
+                coloring
+                    .entry(s.dir.left().forward(here, 1))
+                    .or_insert(Coloring::Left);
+                coloring
+                    .entry(s.dir.right().forward(here, 1))
+                    .or_insert(Coloring::Right);
+            }
+        }
     }
 
-    let mut holes: Vec<(i32, i32)> = coloring
+    let mut holes: Vec<(isize, isize)> = coloring
         .iter()
         .filter_map(|(k, c)| (*c == Coloring::Mid).then_some(k))
         .cloned()
@@ -142,7 +196,7 @@ fn execute_plan(plan: Vec<PlanStep>) -> u64 {
     holes.sort_by(|(x1, y1), (x2, y2)| y1.cmp(y2).then_with(|| x1.cmp(x2)));
 
     // sorted x-coordinates for each row
-    let mut rows: HashMap<i32, Vec<i32>> = HashMap::new();
+    let mut rows: HashMap<isize, Vec<isize>> = HashMap::new();
     for &(x, y) in holes.iter() {
         rows.entry(y).or_default().push(x);
     }
@@ -150,25 +204,29 @@ fn execute_plan(plan: Vec<PlanStep>) -> u64 {
     let mut total = 0;
 
     for (y, xs) in rows {
-        let mut row_total = xs.len() as u64; // include the edges
+        let mut row_total = 0;
 
         let mut inside_coloring = Coloring::Mid; // replaced below
         let mut prev_x = None;
 
         for &x in xs.iter() {
+            row_total += *mult.get(&(x, y)).unwrap();
+
             if inside_coloring == Coloring::Mid {
-                inside_coloring = *coloring.get(&Dir::Right.forward((x, y))).unwrap();
+                inside_coloring = *coloring.get(&Dir::Right.forward((x, y), 1)).unwrap();
             }
             if let Some(prev_x) = prev_x {
                 let d = x - prev_x;
                 if d > 1 {
-                    let c = *coloring.get(&Dir::Left.forward((x, y))).unwrap();
+                    let c = *coloring.get(&Dir::Left.forward((x, y), 1)).unwrap();
                     if c == inside_coloring {
-                        row_total += (d - 1) as u64; // include the space between the edges
+                        for xx in (prev_x+1)..x {
+                            row_total += *mult.get(&(xx, y)).unwrap();
+                        }
                     }
                 }
             } else {
-                let outside_coloring = *coloring.get(&Dir::Left.forward((x, y))).unwrap();
+                let outside_coloring = *coloring.get(&Dir::Left.forward((x, y), 1)).unwrap();
                 inside_coloring = match outside_coloring {
                     Coloring::Left => Coloring::Right,
                     Coloring::Right => Coloring::Left,
