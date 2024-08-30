@@ -19,8 +19,12 @@ fn part_1_big() {
 }
 
 #[test]
-#[ignore]
 fn part_2_big() {
     let input = include_str!("in2.txt");
-    assert_eq!(run(input.lines().collect(), false), 0);
+    assert_eq!(run(input.lines().collect(), false), 240162699605221);
 }
+
+// Idea: could you express this problem as "topological sorting"?
+//  When a signal is emitted from a module the recipients are added to the queue in order, which means that one is < the next one.
+//  A conjunction acts on previously recieved signals, which implies that those signals are < the conjunction and all future signals from the same emitter.
+//  One could potentially construct these kinds of constraints to model the time dependencies between events.
