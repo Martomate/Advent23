@@ -43,14 +43,14 @@ use std::iter;
 
 use dir::*;
 
-struct Graph {
+struct BasicGraph {
     width: usize,
     height: usize,
     edges: Vec<Dirs>,
 }
 
-impl Graph {
-    fn from_lines(lines: &[&str], ignore_slopes: bool) -> Result<Graph, &'static str> {
+impl BasicGraph {
+    fn from_lines(lines: &[&str], ignore_slopes: bool) -> Result<BasicGraph, &'static str> {
         let width = lines[0].len();
         let height = lines.len();
 
@@ -115,26 +115,91 @@ impl Graph {
             }
         }
 
-        Ok(Graph {
+        Ok(BasicGraph {
             width,
             height,
             edges,
         })
     }
 
-    fn find_src(&self) -> Option<usize> {
-        self.edges
-            .iter()
-            .take(self.width)
-            .position(|e| *e != Dirs::none())
-    }
+    fn as_compact_graph(&self) -> Graph {
+        let mut nodes = Vec::new();
+        let mut node_indices = Vec::with_capacity(self.edges.len());
 
-    fn find_dst(&self) -> Option<usize> {
-        self.edges[(self.width * (self.height - 1))..]
-            .iter()
-            .take(self.width)
-            .position(|e| *e != Dirs::none())
+        for y in 0..self.height {
+            for x in 0..self.width {
+                let i = y * self.width + x;
+                let c = self.edges[i];
+                if c != Dirs::none() {
+                    let idx = nodes.len();
+                    nodes.push(Node::new());
+                    node_indices.push(idx);
+                } else {
+                    node_indices.push(0);
+                }
+            }
+        }
+
+        for y in 0..self.height {
+            for x in 0..self.width {
+                let i = y * self.width + x;
+                let c = self.edges[i];
+                if c != Dirs::none() {
+                    let node = &mut nodes[node_indices[i]];
+
+                    for d in [UP, RIGHT, DOWN, LEFT] {
+                        if c[d] {
+                            let (dx, dy) = match d {
+                                UP => (0, -1),
+                                RIGHT => (1, 0),
+                                DOWN => (0, 1),
+                                LEFT => (-1, 0),
+                                _ => unreachable!(),
+                            };
+
+                            let nx = x as isize + dx;
+                            let ny = y as isize + dy;
+
+                            if nx < 0
+                                || ny < 0
+                                || nx >= self.width as isize
+                                || ny >= self.height as isize
+                            {
+                                continue;
+                            }
+
+                            let nx = nx as usize;
+                            let ny = ny as usize;
+                            let idx = ny * self.width + nx;
+
+                            node.edges[node.num_edges as usize] = node_indices[idx] as u16;
+                            node.num_edges += 1;
+                        }
+                    }
+                }
+            }
+        }
+
+        Graph { nodes }
     }
+}
+
+struct Node {
+    edges: [u16; 4], // indices into the `nodes` vector in `Graph`
+    num_edges: u8,
+}
+
+impl Node {
+    fn new() -> Self {
+        Node {
+            edges: [0; 4],
+            num_edges: 0,
+        }
+    }
+}
+
+struct Graph {
+    nodes: Vec<Node>,
 }
 
 struct Search {
@@ -144,59 +209,29 @@ struct Search {
 
 impl Search {
     fn new(graph: Graph) -> Self {
-        let visited = iter::repeat(false)
-            .take(graph.width * graph.height)
-            .collect();
+        let visited = iter::repeat(false).take(graph.nodes.len()).collect();
         Self { graph, visited }
     }
 
-    fn find_longest_path(
-        &mut self,
-        (src_x, src_y): (usize, usize),
-        (dst_x, dst_y): (usize, usize),
-    ) -> Option<u64> {
-        if src_x == dst_x && src_y == dst_y {
+    fn find_longest_path(&mut self, src: u16, dst: u16) -> Option<u16> {
+        if src == dst {
             return Some(0);
         }
 
-        let e = self.graph.edges[src_y * self.graph.width + src_x];
+        let mut best: Option<u16> = None;
 
-        let mut best: Option<u64> = None;
+        let Node { edges, num_edges } = self.graph.nodes[src as usize];
 
-        for d in [UP, RIGHT, DOWN, LEFT] {
-            if e[d] {
-                let (dx, dy) = match d {
-                    UP => (0, -1),
-                    RIGHT => (1, 0),
-                    DOWN => (0, 1),
-                    LEFT => (-1, 0),
-                    _ => unreachable!(),
-                };
-
-                let nx = src_x as isize + dx;
-                let ny = src_y as isize + dy;
-
-                if nx < 0
-                    || ny < 0
-                    || nx >= self.graph.width as isize
-                    || ny >= self.graph.height as isize
-                {
-                    continue;
-                }
-
-                let nx = nx as usize;
-                let ny = ny as usize;
-                let idx = ny * self.graph.width + nx;
-
-                if !self.visited[idx] {
-                    self.visited[idx] = true;
-                    if let Some(res) = self.find_longest_path((nx, ny), (dst_x, dst_y)) {
-                        if best.is_none() || best.unwrap() < res {
-                            best = Some(res);
-                        }
+        for n_idx in 0..num_edges {
+            let neighbor = edges[n_idx as usize];
+            if !self.visited[neighbor as usize] {
+                self.visited[neighbor as usize] = true;
+                if let Some(res) = self.find_longest_path(neighbor, dst) {
+                    if best.is_none() || best.unwrap() < res {
+                        best = Some(res);
                     }
-                    self.visited[idx] = false;
                 }
+                self.visited[neighbor as usize] = false;
             }
         }
 
@@ -205,13 +240,13 @@ impl Search {
 }
 
 pub fn run(lines: Vec<&str>, ignore_slopes: bool) -> u64 {
-    let graph = Graph::from_lines(&lines, ignore_slopes).unwrap();
-    let src_x = graph.find_src().unwrap();
-    let dst_x = graph.find_dst().unwrap();
+    let graph = BasicGraph::from_lines(&lines, ignore_slopes).unwrap();
 
-    let src = (src_x, 0);
-    let dst = (dst_x, graph.height - 1);
+    let graph = graph.as_compact_graph();
+
+    let src = 0;
+    let dst = (graph.nodes.len() - 1) as u16;
 
     let mut search = Search::new(graph);
-    search.find_longest_path(src, dst).unwrap()
+    search.find_longest_path(src, dst).unwrap() as u64
 }
