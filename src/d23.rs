@@ -172,7 +172,7 @@ impl BasicGraph {
                             let ny = ny as usize;
                             let idx = ny * self.width + nx;
 
-                            node.edges[node.num_edges as usize] = node_indices[idx] as u16;
+                            node.edges[node.num_edges as usize] = (node_indices[idx] as u16, 1);
                             node.num_edges += 1;
                         }
                     }
@@ -180,19 +180,19 @@ impl BasicGraph {
             }
         }
 
-        Graph { nodes }
+        Graph { nodes }.simplified()
     }
 }
 
 struct Node {
-    edges: [u16; 4], // indices into the `nodes` vector in `Graph`
+    edges: [(u16, u16); 4], // indices into the `nodes` vector in `Graph`, and the distance
     num_edges: u8,
 }
 
 impl Node {
     fn new() -> Self {
         Node {
-            edges: [0; 4],
+            edges: [(0, 0); 4],
             num_edges: 0,
         }
     }
@@ -200,6 +200,36 @@ impl Node {
 
 struct Graph {
     nodes: Vec<Node>,
+}
+
+impl Graph {
+    fn simplified(mut self) -> Self {
+        for j in 0..self.nodes.len() {
+            let node = &mut self.nodes[j];
+            if node.num_edges == 2 {                
+                let (n1, d1) = node.edges[0];
+                let (n2, d2) = node.edges[1];
+                let dist = d1 + d2;
+
+                node.num_edges = 0;
+
+                let n = &mut self.nodes[n1 as usize];
+                for i in 0..n.num_edges {
+                    if n.edges[i as usize].0 as usize == j {
+                        n.edges[i as usize] = (n2, dist);
+                    }
+                }
+                
+                let n = &mut self.nodes[n2 as usize];
+                for i in 0..n.num_edges {
+                    if n.edges[i as usize].0 as usize == j {
+                        n.edges[i as usize] = (n1, dist);
+                    }
+                }
+            }
+        }
+        self
+    }
 }
 
 struct Search {
@@ -223,10 +253,11 @@ impl Search {
         let Node { edges, num_edges } = self.graph.nodes[src as usize];
 
         for n_idx in 0..num_edges {
-            let neighbor = edges[n_idx as usize];
+            let (neighbor, dist) = edges[n_idx as usize];
             if !self.visited[neighbor as usize] {
                 self.visited[neighbor as usize] = true;
                 if let Some(res) = self.find_longest_path(neighbor, dst) {
+                    let res = res + dist;
                     if best.is_none() || best.unwrap() < res {
                         best = Some(res);
                     }
@@ -235,7 +266,7 @@ impl Search {
             }
         }
 
-        best.map(|d| d + 1)
+        best
     }
 }
 

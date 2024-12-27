@@ -20,6 +20,6 @@ fn part_2_small() {
 
 #[test]
 fn part_2_big() {
-    // this runs in about 150 seconds (2.5 min)
+    // this runs in about 0.17 seconds
     assert_eq!(run(IN_2.lines().collect(), true), 6526);
 }
