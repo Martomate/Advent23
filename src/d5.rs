@@ -54,9 +54,9 @@ impl Remap {
         let r = vr.min(sr).max(vl);
 
         (
-            Range::new(vl, if l > vl { l - vl } else { 0 }),
-            Range::new(l, if r > l { r - l } else { 0 }),
-            Range::new(r, if vr > r { vr - r } else { 0 }),
+            Range::new(vl, l.saturating_sub(vl)),
+            Range::new(l, r.saturating_sub(l)),
+            Range::new(r, vr.saturating_sub(r)),
         )
     }
 }

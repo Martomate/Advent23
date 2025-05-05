@@ -86,7 +86,7 @@ struct Workflow<'a> {
     rules: Vec<Rule<'a>>,
 }
 
-impl<'a> Workflow<'a> {
+impl Workflow<'_> {
     fn evaluate(&self, part: &Part) -> Destination {
         for rule in self.rules.iter() {
             if let Some(dest) = rule.evaluate(part) {

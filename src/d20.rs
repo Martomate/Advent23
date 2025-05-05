@@ -12,7 +12,7 @@ enum ModuleState<'a> {
     Broadcast,
 }
 
-impl<'a> Display for ModuleState<'a> {
+impl Display for ModuleState<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         use ModuleState::*;
 
