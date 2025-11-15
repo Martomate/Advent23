@@ -39,8 +39,6 @@ mod dir {
     }
 }
 
-use std::iter;
-
 use dir::*;
 
 struct BasicGraph {
@@ -239,7 +237,7 @@ struct Search {
 
 impl Search {
     fn new(graph: Graph) -> Self {
-        let visited = iter::repeat(false).take(graph.nodes.len()).collect();
+        let visited = std::iter::repeat_n(false, graph.nodes.len()).collect();
         Self { graph, visited }
     }
 

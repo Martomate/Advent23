@@ -62,7 +62,7 @@ impl<'a> From<(ModuleType, &'a str, Vec<&'a str>)> for Module<'a> {
     }
 }
 
-fn parse_line(line: &str) -> Module {
+fn parse_line<'a>(line: &'a str) -> Module<'a> {
     let (l, r) = line.split_once(" -> ").unwrap();
 
     let (name, module_type) = if let Some(name) = l.strip_prefix('%') {
@@ -106,7 +106,7 @@ fn find_repeating_pattern(numbers: &[((u64, u64), Signal)]) -> Option<(u64, u64)
     None
 }
 
-fn parse_input(lines: Vec<&str>) -> ModuleConfig {
+fn parse_input<'a>(lines: Vec<&'a str>) -> ModuleConfig<'a> {
     ModuleConfig::from_lines(lines.into_iter().map(parse_line).collect())
 }
 

@@ -1,4 +1,4 @@
-use std::{collections::HashSet, iter};
+use std::collections::HashSet;
 
 #[derive(Debug, Hash, PartialEq, Eq, Clone, Copy)]
 struct Point {
@@ -200,14 +200,14 @@ pub fn run(lines: Vec<&str>, chain_reaction: bool) -> u64 {
     let dependents = dependents;
     let dependencies = dependencies;
 
-    let mut num: Vec<u64> = iter::repeat(0).take(bricks.len()).collect();
+    let mut num: Vec<u64> = std::iter::repeat_n(0, bricks.len()).collect();
 
     for (s_idx, _) in bricks.iter().enumerate() {
         let mut dependencies = dependencies.clone();
 
         dependencies[s_idx].clear(); // make this brick removable
 
-        let mut removed: Vec<bool> = iter::repeat(false).take(bricks.len()).collect();
+        let mut removed: Vec<bool> = std::iter::repeat_n(false, bricks.len()).collect();
 
         loop {
             let mut added = 0;

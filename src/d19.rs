@@ -44,7 +44,7 @@ enum Destination<'a> {
     Workflow(&'a str),
 }
 
-fn parse_destination(s: &str) -> Destination {
+fn parse_destination<'a>(s: &'a str) -> Destination<'a> {
     match s {
         "A" => Destination::Accepted,
         "R" => Destination::Rejected,
@@ -68,7 +68,7 @@ impl<'a> Rule<'a> {
     }
 }
 
-fn parse_rule(s: &str) -> Rule {
+fn parse_rule<'a>(s: &'a str) -> Rule<'a> {
     match s.split_once(':') {
         Some((left, right)) => Rule {
             condition: Some(parse_condition(left)),
@@ -86,8 +86,8 @@ struct Workflow<'a> {
     rules: Vec<Rule<'a>>,
 }
 
-impl Workflow<'_> {
-    fn evaluate(&self, part: &Part) -> Destination {
+impl<'a> Workflow<'a> {
+    fn evaluate(&'a self, part: &'a Part) -> Destination<'a> {
         for rule in self.rules.iter() {
             if let Some(dest) = rule.evaluate(part) {
                 return dest;
@@ -97,7 +97,7 @@ impl Workflow<'_> {
     }
 }
 
-fn parse_workflow(line: &str) -> Workflow {
+fn parse_workflow<'a>(line: &'a str) -> Workflow<'a> {
     let (name, rest) = line.split_once('{').unwrap();
     let rest = rest.strip_suffix('}').unwrap();
     let rules = rest.split(',').map(parse_rule).collect();

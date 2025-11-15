@@ -38,7 +38,7 @@ struct Graph {
 impl Graph {
     fn new(nodes: Vec<Vec<usize>>) -> Self {
         let active_nodes: Vec<usize> = (0..nodes.len()).filter(|&i| !nodes[i].is_empty()).collect();
-        let node_cardinalities: Vec<usize> = std::iter::repeat(1).take(nodes.len()).collect();
+        let node_cardinalities: Vec<usize> = std::iter::repeat_n(1, nodes.len()).collect();
         Self {
             nodes,
             active_nodes,
