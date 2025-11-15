@@ -44,7 +44,7 @@ fn intersect(l: Cycle, r: Cycle) -> Cycle {
         for &ra in r.offsets.iter() {
             for n in 0..r.length {
                 let x = la + n * l.length;
-                if (x + r.length - ra) % r.length == 0 {
+                if (x + r.length - ra).is_multiple_of(r.length) {
                     // found first match
                     offsets.push(x);
                     break;

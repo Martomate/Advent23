@@ -89,7 +89,7 @@ pub fn run(lines: Vec<&str>, steps: u32, repeat: bool) -> u64 {
             shells -= 1;
         }
 
-        if (steps - dist) % 2 == 0 {
+        if (steps - dist).is_multiple_of(2) {
             count += 1;
         }
 

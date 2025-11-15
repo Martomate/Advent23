@@ -10,7 +10,7 @@ impl Range {
     }
 
     fn from_pairs(numbers: &[u64]) -> Vec<Range> {
-        assert!(numbers.len() % 2 == 0);
+        assert!(numbers.len().is_multiple_of(2));
 
         let mut ranges = Vec::new();
         for arr in numbers.chunks_exact(2) {
