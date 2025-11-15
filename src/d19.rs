@@ -59,10 +59,10 @@ struct Rule<'a> {
 
 impl<'a> Rule<'a> {
     fn evaluate(&'a self, part: &Part) -> Option<Destination<'a>> {
-        if let Some(ref cond) = self.condition {
-            if !cond.evaluate(part) {
-                return None;
-            }
+        if let Some(ref cond) = self.condition
+            && !cond.evaluate(part)
+        {
+            return None;
         }
         Some(self.destination)
     }

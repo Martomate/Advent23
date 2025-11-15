@@ -202,25 +202,25 @@ impl Grid {
     fn infer_pipe(&mut self, sx: usize, sy: usize) -> Result<(), String> {
         let mut dirs = Vec::with_capacity(4);
 
-        if let Some(pipe) = self.neighbor_pipe(sx, sy, Dir::Left) {
-            if pipe.connects_to(Dir::Right) {
-                dirs.push(Dir::Left);
-            }
+        if let Some(pipe) = self.neighbor_pipe(sx, sy, Dir::Left)
+            && pipe.connects_to(Dir::Right)
+        {
+            dirs.push(Dir::Left);
         }
-        if let Some(pipe) = self.neighbor_pipe(sx, sy, Dir::Right) {
-            if pipe.connects_to(Dir::Left) {
-                dirs.push(Dir::Right);
-            }
+        if let Some(pipe) = self.neighbor_pipe(sx, sy, Dir::Right)
+            && pipe.connects_to(Dir::Left)
+        {
+            dirs.push(Dir::Right);
         }
-        if let Some(pipe) = self.neighbor_pipe(sx, sy, Dir::Up) {
-            if pipe.connects_to(Dir::Down) {
-                dirs.push(Dir::Up);
-            }
+        if let Some(pipe) = self.neighbor_pipe(sx, sy, Dir::Up)
+            && pipe.connects_to(Dir::Down)
+        {
+            dirs.push(Dir::Up);
         }
-        if let Some(pipe) = self.neighbor_pipe(sx, sy, Dir::Down) {
-            if pipe.connects_to(Dir::Up) {
-                dirs.push(Dir::Down);
-            }
+        if let Some(pipe) = self.neighbor_pipe(sx, sy, Dir::Down)
+            && pipe.connects_to(Dir::Up)
+        {
+            dirs.push(Dir::Down);
         }
         if dirs.len() != 2 {
             return Err(format!(
@@ -323,19 +323,19 @@ impl Grid {
     fn fill_coloring(&mut self) {
         for y in 0..self.spots.len() {
             for x in 0..self.spots[0].len() {
-                if let Some(color) = self.spots[y][x].coloring {
-                    if color != Coloring::Path {
-                        let mut q: Queue<(usize, usize)> = Queue::new();
-                        q.add((x, y)).unwrap();
+                if let Some(color) = self.spots[y][x].coloring
+                    && color != Coloring::Path
+                {
+                    let mut q: Queue<(usize, usize)> = Queue::new();
+                    q.add((x, y)).unwrap();
 
-                        while let Ok((x, y)) = q.remove() {
-                            for dir in [Dir::Up, Dir::Down, Dir::Left, Dir::Right] {
-                                if let Some((nx, ny)) = self.neighbor_coords(x, y, dir) {
-                                    let col = self.coloring_mut(nx, ny);
-                                    if col.is_none() {
-                                        *col = Some(color);
-                                        q.add((nx, ny)).unwrap();
-                                    }
+                    while let Ok((x, y)) = q.remove() {
+                        for dir in [Dir::Up, Dir::Down, Dir::Left, Dir::Right] {
+                            if let Some((nx, ny)) = self.neighbor_coords(x, y, dir) {
+                                let col = self.coloring_mut(nx, ny);
+                                if col.is_none() {
+                                    *col = Some(color);
+                                    q.add((nx, ny)).unwrap();
                                 }
                             }
                         }

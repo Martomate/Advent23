@@ -15,17 +15,17 @@ fn extract_value(s: &str, allow_words: bool) -> u32 {
         .collect();
 
         for (n, w) in numbers {
-            if let Some(idx) = s.find(&w) {
-                if idx < lo_idx {
-                    lo_idx = idx;
-                    lo = n;
-                }
+            if let Some(idx) = s.find(&w)
+                && idx < lo_idx
+            {
+                lo_idx = idx;
+                lo = n;
             }
-            if let Some(idx) = s.rfind(&w) {
-                if idx as i32 > hi_idx {
-                    hi_idx = idx as i32;
-                    hi = n;
-                }
+            if let Some(idx) = s.rfind(&w)
+                && idx as i32 > hi_idx
+            {
+                hi_idx = idx as i32;
+                hi = n;
             }
         }
 

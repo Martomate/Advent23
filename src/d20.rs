@@ -21,7 +21,7 @@ impl Display for ModuleState<'_> {
             Conjunction(inputs) => {
                 let inputs = inputs
                     .iter()
-                    .sorted_by_key(|(&n, _)| n)
+                    .sorted_by_key(|&(&n, _)| n)
                     .map(|(_, &s)| format!("{}", if s == Signal::High { 'H' } else { 'L' }))
                     .join("");
                 write!(f, "{}", inputs)
@@ -409,7 +409,7 @@ fn _make_state_str(modules: &ModuleConfig, compact: bool) -> String {
     modules
         .states
         .iter()
-        .sorted_by_key(|(&n, _)| n)
+        .sorted_by_key(|&(&n, _)| n)
         .map(|(_, state)| format!("{}", state))
         .join(if compact { "" } else { " " })
 }
